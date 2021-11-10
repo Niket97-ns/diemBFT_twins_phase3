@@ -1,4 +1,5 @@
 from typing_extensions import OrderedDict
+import random
 
 class TwinHandler:
 
@@ -42,18 +43,23 @@ class TwinHandler:
         # Generate all possible partition sets based on the
         total_number_of_nodes = number_of_nodes + number_of_twins
 
-        partitions = step1_partitions()
+        partitions = step1_partitions(total_number_of_nodes)
+
+        partition_sets = [partitions[random.randint(0, len(partitions))] for _ in range(number_of_partitions_sets)]
 
         partition_with_leaders = []
-        for x in range(len(partitions)):
+        for p in range(len(partitions)):
             if leaders_only_faulty:
                 for l in range(1, number_of_twins):
-                    
-                    pass
+                    partition_with_leaders.append({"partitions": p, "leaders":[l, l + number_of_nodes]})
             else:
                 for l in total_number_of_nodes:
-                    pass
+                    partition_with_leaders.append({"partitions": p, "leaders":[l]})
 
+        if selection_type_for_partitions:
+            pruned_partition_with_leaders = [partition_with_leaders[random.randint(0, len(partition_with_leaders)] for _ in range(number_of_partitions_pruned))]
+        else:
+            pruned_partition_with_leaders = [partition_with_leaders[random.randint(0, len(partition_with_leaders) for _ in range(number_of_partitions_pruned))]]
 
     def execute_scenario(self, file):
         pass
