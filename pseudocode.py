@@ -28,7 +28,7 @@ class TwinHandler:
                           number_of_nodes,
                           number_of_twins,
                           rounds,
-                          number_of_partitions_sets=None,
+                          #   number_of_partitions_sets=None,
                           leaders_only_faulty=False,
                           number_of_partitions_pruned=None,
                           selection_type_for_partitions="RANDOM",
@@ -42,41 +42,83 @@ class TwinHandler:
         # Generate all possible partition sets based on the
         total_number_of_nodes = number_of_nodes + number_of_twins
 
-        partitions = step1_partitions(total_number_of_nodes)
+        partitions = self.step1_partitions(total_number_of_nodes)
 
-        partition_sets = [partitions[random.randint(
-            0, len(partitions))] for _ in range(number_of_partitions_sets)]
+        partition_sets = []
+        if selection_type_for_partitions == "RANDOM":
+            partition_sets = [partitions[random.randint(
+                0, len(partitions))] for _ in range(number_of_partitions_pruned)]
+        else:
+            partition_sets = [partitions[i]
+                              for i in range(number_of_partitions_pruned)]
 
         partition_with_leaders = []
-        for p in range(len(partitions)):
-            if leaders_only_faulty:
-                for l in range(1, number_of_twins):
-                    partition_with_leaders.append(
-                        {"partitions": p, "leaders": [l, l + number_of_nodes]})
-            else:
-                for l in total_number_of_nodes:
+        for p in partition_sets:
+            for l in range(1, number_of_twins):
+                partition_with_leaders.append(
+                    {"partitions": p, "leaders": [l, l + number_of_nodes]})
+            if not leaders_only_faulty:
+                for l in range(number_of_twins, number_of_nodes):
                     partition_with_leaders.append(
                         {"partitions": p, "leaders": [l]})
 
-        if selection_type_for_partitions:
-            pruned_partition_with_leaders = [partition_with_leaders[random.randint(0, len(partition_with_leaders)] for _ in range(number_of_partitions_pruned))]
+        pruned_partition_with_leaders = []
+        if selection_type_for_partitions_leaders_pruned == "RANDOM":
+            pruned_partition_with_leaders = [partition_with_leaders[random.randint(0, len(
+                partition_with_leaders))] for _ in range(number_of_partitions_leaders_pruned)]
         else:
-            pruned_partition_with_leaders = [partition_with_leaders[random.randint(0, len(partition_with_leaders) for _ in range(number_of_partitions_pruned))]]
+            pruned_partition_with_leaders = [
+                partition_with_leaders[i] for i in range(number_of_partitions_leaders_pruned)]
+
+        configs = []
+        for _ in range(number_of_configs_pruned):
+            config = {}
+            if selection_type_for_configs_pruned == "RANDOM":
+                if with_replacement:
+                    for i in range(rounds):
+                        config[i] = pruned_partition_with_leaders[random.randint(
+                            0, len(pruned_partition_with_leaders))]
+                else:
+                    already_included_cofig = set()
+                    i = 0
+                    while i < rounds:
+                        itr = random.randint(
+                            0, len(pruned_partition_with_leaders))
+                        if itr not in already_included_cofig:
+                            config[i] = pruned_partition_with_leaders[itr]
+            else:
+                for i in range(rounds):
+                    config[i] = pruned_partition_with_leaders[i]
+
+            # write to file "config"
+
+            configs.append(config)
 
     def execute_scenario(self, file):
         pass
 
     '''
-    test_case_config is of the form:
+    Scenario generated in output file which will be of the form:
+    {
+        test_case_1: {
+            num_of_nodes: 4,
+            num_of_faulty: 1,
+            nodes: [1,2,3,4,5],
+            test_case_config: {
+                ...
+            }
+        }
+    }
 
+    test_case_config is of the form:
     {
         1: {
             partitions = [[1,2,3], [4,5]],
-            leaders = [2]
+            leader = [2]
         },
         2: {
             partitions = [[1,3], [2], [4,5]],
-            leaders = [1,5]
+            leader = [1,5]
         }
     }
     '''
