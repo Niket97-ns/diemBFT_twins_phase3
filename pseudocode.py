@@ -1,6 +1,5 @@
 from typing_extensions import OrderedDict
 
-
 class TwinHandler:
 
     def __init_(self, number_of_nodes):
@@ -14,6 +13,16 @@ class TwinHandler:
 
     def get_node_name(self, i):
         return chr(ord('A') + i)
+
+    
+
+    def step1_partitions(total_number_of_nodes):
+        partitions = []
+        for i in range(1, total_number_of_nodes):
+            # Create partitions based on this source code and add it to list with differnt number of partitions.
+            # https://stackoverflow.com/questions/64458592/recursively-finding-all-partitions-of-a-set-of-n-objects-into-k-non-empty-subset
+            pass
+        return partitions
 
     def generate_scenario(self,
                           number_of_nodes,
@@ -31,21 +40,20 @@ class TwinHandler:
                           ):
 
         # Generate all possible partition sets based on the
+        total_number_of_nodes = number_of_nodes + number_of_twins
 
-        #
+        partitions = step1_partitions()
 
-        rounds = 10  # number of rounds
-        # vector of vectors for partitions from 1-n rounds
-        partitions = [[(A, B), (C, D)], [(A, D), (B, C)]]
-        leaders = []  # vector of leaders for round 1-n
-        scenario = {}
-        for round in range(1, rounds+1):
-            scenario[round] = {
-                "partitions": partitions[round-1],
-                "leader": leaders[round-1]
-            }
+        partition_with_leaders = []
+        for x in range(len(partitions)):
+            if leaders_only_faulty:
+                for l in range(1, number_of_twins):
+                    
+                    pass
+            else:
+                for l in total_number_of_nodes:
+                    pass
 
-        pass
 
     def execute_scenario(self, file):
         pass
