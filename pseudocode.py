@@ -101,16 +101,27 @@ class TwinHandler:
         pass
 
     '''
-    test_case_config is of the form:
+    Scenario generated in output file which will be of the form:
+    {
+        test_case_1: {
+            num_of_nodes: 4,
+            num_of_faulty: 1,
+            nodes: [1,2,3,4,5],
+            test_case_config: {
+                ...
+            }
+        }
+    }
 
+    test_case_config is of the form:
     {
         1: {
             partitions = [[1,2,3], [4,5]],
-            leaders = [2]
+            leader = [2]
         },
         2: {
             partitions = [[1,3], [2], [4,5]],
-            leaders = [1,5]
+            leader = [1,5]
         }
     }
     '''
