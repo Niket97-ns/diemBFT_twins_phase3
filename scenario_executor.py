@@ -1,24 +1,47 @@
 
 class NetworkPlayground(process):
     def setup(self, node_id_to_node, account_addr_to_node_ids, x, test_case_config):
-        self.current_round = 0
-        self.msgs_rcvd_in_current_round = 0
-        self.max_msgs_per_round = x # some x for now
-        self.node_id_to_node = node_id_to_node
-        self.account_addr_to_node_ids = account_addr_to_node_ids
+        # self.current_round = 0
+        # self.msgs_rcvd_in_current_round = 0
+        # self.max_msgs_per_round = x  # some x for now
+        # self.node_id_to_node = node_id_to_node
+        # self.account_addr_to_node_ids = account_addr_to_node_ids
 
         self.test_case_config = test_case_config
-    
-    def advance_round_if_needed():
+
+    # def is_message_dropped(self, curr_round, src, dest):
+    #     for partition in self.test_case_config[round]["partitions"]:
+
+    # def find_possible_destination_process_ids(self, round, sender_process_id):
+    #     possible_destination_process_ids = []
+    #     for partition in self.test_case_config[round]["partitions"]:
+    #         if sender_process_id in partition:
+    #             possible_destination_process_ids = partition.copy()
+    #     return possible_destination_process_ids
+
+    # def forward_message(self, round, sender_process_id, msg_type="proposal|vote|timeout"):
+    #     possible_destination_process_ids = self.find_possible_destination_process_ids(
+    #         round, sender_process_id)
+    #     # for j in possible_destination_process_ids:
+    #     if msg_type == "vote":
+    #         # TODO: get leader of next round
+    #         # send to leader of next round if leader is in same partition as sender in this round
+
+    #     else:
+
+    def advance_round_if_needed(self):
         self.msgs_rcvd_in_current_round = self.msgs_rcvd_in_current_round + 1
         if self.num_msgs_per_round >= self.max_msgs_per_round:
             self.current_round = self.current_round + 1
             self.num_msgs_per_round = 0
 
-    def infer_round_from_msg(msg):
-        # get round number from msg
-        # round_inferred_from_msg = msg.block.round?
-        return 0
+    def infer_round_from_msg(self, msg, msg_type="proposal|vote|timeout"):
+        if msg_type == "proposal":
+            return msg.block.round
+        elif msg_type == "vote":
+            return msg.vote_info.round
+        elif msg_type == "timeout":
+            return msg.tmo_info.round
 
     def receive(msg, from_=p):
         advance_round_if_needed()
@@ -34,8 +57,8 @@ class NetworkPlayground(process):
 
             # get node_id's of from and to nodes using self.account_addr_to_node_id's
             # or node_id's will be present in message?
-            from_node_id = 1 # some value
-            to_node_id = 3 # some value
+            from_node_id = 1  # some value
+            to_node_id = 3  # some value
 
             bool is_msg_tobe_dropped = False
             # check if these node_id's are in the same partition in that round
@@ -43,25 +66,75 @@ class NetworkPlayground(process):
                 if from_node_id in partition:
                     if to_node_id not in partition:
                         is_msg_tobe_dropped = True
-        
+
             if not is_msg_tobe_dropped:
                 to_node = self.node_id_to_node[to_node_id]
                 send(msg, to=to_node)
 
 
-
-    
 class ScenarioExecutor:
-    def __init__(self):
-        # read config from file ? or receive config for one testcase from another function that reads all configs from file and creates scenario executor instance for each testcase
-        # generate nodes/procs for each node for that testcase
-        # make leaders?? - network playground will have to create leaders?
-        # create mapping node_id to actual node i.e. node_id_to_node
-        # node_id's are [1,2,3,4,5] where 5 is 1's twin
-        # create mapping account address to node_id i.e. account_addr_to_node_ids
-        # this is because account address for 1 and 5 is same
-        # pass all these values to network playground
-        pass
-    
-    
+    def __init__(self, number_of_nodes, number_of_twins):
+        # {1 : (po1, pk1), 2: (p02,pk2) ...... n+f: p0...}
+        self.node_number_to_credentials = {}
 
+        # self.validator_public_keys = {}
+        self.validator_private_keys = {}
+        self.node_to_twin = {}
+        self.twin_to_node = {}
+
+        self.identifier_to_public_key_map = {}
+        self.process_identifier_to_process_id_map = {}
+        self.identifier_to_process_id_map = {}
+
+        self.validators = new(Validators, num=number_of_nodes)
+
+        for v in range(1, number_of_nodes+1):
+            self.validator_private_keys[v], self.validator_public_keys[v] = generateKeys(
+            )
+            self.identifier_to_process_id_map[v] = self.validators[v-1]
+
+        for idx, validator in enumerate(self.validators):
+            # setup validators and send public key of all other validators, and private key of itself
+            setup(validator, (self.validator_private_keys[idx+1],
+                              self.identifier_to_public_key_map, (number_of_nodes-1)//3,))
+
+        self.add_twins(number_of_twins)
+
+        # create network playground as a process
+        # setup network playground and pass to it:
+        # scenario, all mapping_info for identifiers, process_ids ...
+
+    # def get_node_identifier(self, number):
+    #     return self.identifiers_map[number]
+    #     # return number
+
+    # def get_process_id_from_config_number(self, number):
+    #     return self.identifier_to_process_id_map[number]
+
+    # def create_process_identifier_to_process_id_map(self):
+    #     for key in self.identifiers_map.keys():
+    #         curr_identifier = self.identifiers_map[key]
+    #         self.process_identifier_to_process_id_map[curr_identifier] = [
+    #             self.validators[key-1]]
+    #     return
+
+    # def add_twins(self, number_of_nodes, number_of_twins):
+    #     self.twins = new(Validators, num=number_of_twins)
+
+    #     for idx, twin in enumerate(self.twins):
+    #         # setup validators and send public key of all other validators, and private key of itself
+    #         setup(twin, (self.validator_private_keys[idx+1],
+    #                      self.identifier_to_public_key_map, (number_of_nodes-1)//3,))
+
+    #     for f in range(number_of_nodes+1, number_of_nodes + number_of_twins + 1):
+    #         self.identifiers_map[f] = self.identifiers_map[f-number_of_nodes]
+
+    #     for f in range(1, number_of_twins):
+    #         curr_identifier = self.identifiers_map[f]
+    #         self.process_identifier_to_process_id_map[curr_identifier].append(
+    #             self.twins[f-1])
+    #         self.identifier_to_process_id_map[f +
+    #                                           number_of_nodes] = self.twins[f-1]
+
+
+def execute_scenario(number_of_nodes, number_of_twins, scenario):

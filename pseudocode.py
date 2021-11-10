@@ -1,6 +1,7 @@
 from typing_extensions import OrderedDict
 import random
 
+
 class TwinHandler:
 
     def __init_(self, number_of_nodes):
@@ -14,8 +15,6 @@ class TwinHandler:
 
     def get_node_name(self, i):
         return chr(ord('A') + i)
-
-    
 
     def step1_partitions(total_number_of_nodes):
         partitions = []
@@ -45,16 +44,19 @@ class TwinHandler:
 
         partitions = step1_partitions(total_number_of_nodes)
 
-        partition_sets = [partitions[random.randint(0, len(partitions))] for _ in range(number_of_partitions_sets)]
+        partition_sets = [partitions[random.randint(
+            0, len(partitions))] for _ in range(number_of_partitions_sets)]
 
         partition_with_leaders = []
         for p in range(len(partitions)):
             if leaders_only_faulty:
                 for l in range(1, number_of_twins):
-                    partition_with_leaders.append({"partitions": p, "leaders":[l, l + number_of_nodes]})
+                    partition_with_leaders.append(
+                        {"partitions": p, "leaders": [l, l + number_of_nodes]})
             else:
                 for l in total_number_of_nodes:
-                    partition_with_leaders.append({"partitions": p, "leaders":[l]})
+                    partition_with_leaders.append(
+                        {"partitions": p, "leaders": [l]})
 
         if selection_type_for_partitions:
             pruned_partition_with_leaders = [partition_with_leaders[random.randint(0, len(partition_with_leaders)] for _ in range(number_of_partitions_pruned))]
@@ -63,7 +65,6 @@ class TwinHandler:
 
     def execute_scenario(self, file):
         pass
-
 
     '''
     test_case_config is of the form:
@@ -99,4 +100,3 @@ class TwinHandler:
 
             test_case_config[i]["partitions"] = new_partitions
         return test_case_config
-
