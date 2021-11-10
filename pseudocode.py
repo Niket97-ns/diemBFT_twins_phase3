@@ -57,3 +57,40 @@ class TwinHandler:
 
     def execute_scenario(self, file):
         pass
+
+
+    '''
+    test_case_config is of the form:
+
+    {
+        1: {
+            partitions = [[1,2,3], [4,5]],
+            leaders = [2]
+        },
+        2: {
+            partitions = [[1,3], [2], [4,5]],
+            leaders = [1,5]
+        }
+    }
+    '''
+    def intrapartition_msg_drops(test_case_config, node_id, round_from, round_to):
+        for i in range(round_from, round_to + 1):
+            new_partitions = []
+            for partition in test_case_config[i]["partitions"]:
+                if node_id in partition:
+                    # create separate partition for node_id
+                    # create copy of partition
+                    new_partition = partition.copy()
+                    # remove node_id from partition
+                    new_partition.remove(node_id)
+                    new_partitions.append(new_partition)
+                    # create separate list for node_id
+                    node_id_partition = []
+                    node_id_partition.append(node_id)
+                    new_partitions.append(node_id_partition)
+                else:
+                    new_partitions.append(partition)
+
+            test_case_config[i]["partitions"] = new_partitions
+        return test_case_config
+
