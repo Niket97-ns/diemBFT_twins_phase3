@@ -6,6 +6,8 @@ scenario is now of the form:
     leader = [ [2], [1,5] ]
 }
 '''
+
+
 class NetworkPlayground(process):
 
     '''
@@ -52,10 +54,9 @@ class NetworkPlayground(process):
     def get_destination_from_msg(msg):
         return msg.destination_node
 
-    def has_twin(node):
-        return node in self.node_to_twin
-
     def get_twin(destination_node_num):
+        if destination_node_num not in self.node_to_twin:
+            return None
         return self.node_to_twin[destination_node_num]
 
     def get_msg_type(msg):
@@ -100,10 +101,7 @@ class NetworkPlayground(process):
             # still handle broadcast
             pass
 
-
         all_partitions = self.get_partitions_for_type(msg_type)[msg_round]
-
-
 
         if msg_type == 'proposal' or msg_type == 'timeout':
 
@@ -115,21 +113,18 @@ class NetworkPlayground(process):
             self.send_to_nodes(list_of_validators_to_send_to,
                                msg, actual_sender_node)
 
-
-
         elif msg_type == 'vote':
 
             # unicast
             node_nums_in_partition = self.get_partition(all_partitions, p)
             destination_node_num = self.get_destination_from_msg(msg)
 
-
             destination_nodes = []
             if destination_node_num in node_nums_in_partition:
                 # only then send msg to destination
                 destination_nodes.append(destination_node_num)
 
-            if self.has_twin(destination_node_num) and self.get_twin(destination_node_num) in node_nums_in_partition:
+            if self.get_twin(destination_node_num) and self.get_twin(destination_node_num) in node_nums_in_partition:
                 # Replace twin if needed
                 destination_nodes.append(self.get_twin(destination_node_num))
 
