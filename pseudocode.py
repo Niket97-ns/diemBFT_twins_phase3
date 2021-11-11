@@ -189,46 +189,6 @@ class TwinHandler:
         # return test_case_config
 
 
-#######################################
-
-
-class NetworkPlayground(process):
-
-    # initialize variables
-    # scenario information, number_of_nodes, number_of_twins, required_hashmaps
-
-    # listen for messages from all validator processes until round r+3, where round r->r+3 have no partitions
-
-    # based on received message, partition information, and twin existence,
-    # forward message to appropriate recipient
-
-
-class ScenarioExecutor(process):
-
-    # initialize variable
-    # number_of_nodes, number_of_twins
-
-    # read scenarios from file, for each scenario, do the following:
-
-    ##### start execute scenario ######
-
-    # initialize node processes(not twins), generate keys, pass them to created processes
-    # alongwith leader information for each round
-
-    # create various maps
-
-    # initialize twin processes, pass them the same keys as their twin_node, along with the
-    # same leader info
-
-    # instantiate ntwk playground, pass it the required maps, and process_ids
-
-    # while network playgrounds sends end trigger:
-    # listen for safety and liveness checks directly from nodes
-
-    # if safety or liveness violated: raise alert quit all processes.
-    # end network playground process, along with all validator processes
-
-    ##### end execute scenario ######
 
 
 def main():
