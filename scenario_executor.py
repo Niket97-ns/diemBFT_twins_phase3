@@ -35,6 +35,13 @@ class NetworkPlayground(process):
             self.current_round = self.current_round + 1
             self.num_msgs_per_round = 0
 
+    def get_node_process_id(self, node_id):
+        process_id = self.node_number_to_credentials[node_id][0]
+        return process_id
+
+    def is_twin(self, process_id):
+        return (process_id in self.twin_to_node)
+
     def infer_round_from_msg(self, msg, msg_type="proposal|vote|timeout"):
         if msg_type == "proposal":
             return msg.block.round
@@ -77,26 +84,23 @@ class ScenarioExecutor:
         # {1 : (po1, pk1), 2: (p02,pk2) ...... n+f: p0...}
         self.node_number_to_credentials = {}
 
-        # self.validator_public_keys = {}
+        self.validator_public_keys = {}
         self.validator_private_keys = {}
         self.node_to_twin = {}
         self.twin_to_node = {}
 
-        self.identifier_to_public_key_map = {}
-        self.process_identifier_to_process_id_map = {}
-        self.identifier_to_process_id_map = {}
-
         self.validators = new(Validators, num=number_of_nodes)
 
         for v in range(1, number_of_nodes+1):
-            self.validator_private_keys[v], self.validator_public_keys[v] = generateKeys(
-            )
-            self.identifier_to_process_id_map[v] = self.validators[v-1]
+            public_key, private_key = generate_keys()
+            self.validator_private_keys[v] = private_key
+            self.node_number_to_credentials[v] = (
+                self.validators[v-1], public_key)
 
         for idx, validator in enumerate(self.validators):
             # setup validators and send public key of all other validators, and private key of itself
             setup(validator, (self.validator_private_keys[idx+1],
-                              self.identifier_to_public_key_map, (number_of_nodes-1)//3,))
+                              self.node_number_to_credentials, (number_of_nodes-1)//3,))
 
         self.add_twins(number_of_twins)
 
@@ -104,9 +108,8 @@ class ScenarioExecutor:
         # setup network playground and pass to it:
         # scenario, all mapping_info for identifiers, process_ids ...
 
-    # def get_node_identifier(self, number):
-    #     return self.identifiers_map[number]
-    #     # return number
+    def get_node_identifier(self, number):
+        return self.identifiers_map[number]
 
     # def get_process_id_from_config_number(self, number):
     #     return self.identifier_to_process_id_map[number]
@@ -118,16 +121,22 @@ class ScenarioExecutor:
     #             self.validators[key-1]]
     #     return
 
-    # def add_twins(self, number_of_nodes, number_of_twins):
-    #     self.twins = new(Validators, num=number_of_twins)
+    def add_twins(self, number_of_nodes, number_of_twins):
+        self.twins = new(Validators, num=number_of_twins)
 
-    #     for idx, twin in enumerate(self.twins):
-    #         # setup validators and send public key of all other validators, and private key of itself
-    #         setup(twin, (self.validator_private_keys[idx+1],
-    #                      self.identifier_to_public_key_map, (number_of_nodes-1)//3,))
+        for idx, twin in enumerate(self.twins):
+            #         # setup validators and send public key of all other validators, and private key of itself
+            setup(twin, (self.validator_private_keys[idx+1],
+                         self.node_number_to_credentials, (number_of_nodes-1)//3,))
 
-    #     for f in range(number_of_nodes+1, number_of_nodes + number_of_twins + 1):
-    #         self.identifiers_map[f] = self.identifiers_map[f-number_of_nodes]
+        for f in range(number_of_nodes+1, number_of_nodes + number_of_twins + 1):
+            twin_process_id = self.twins[f-1-number_of_nodes]
+            (node_process_id,
+             node_public_key) = self.node_number_to_credentials[f-number_of_nodes]
+            self.node_number_to_credentials[f] = (
+                twin_process_id, node_public_key)
+            self.node_to_twin[node_process_id] = twin_process_id
+            self.twin_to_node[twin_process_id] = node_process_id
 
     #     for f in range(1, number_of_twins):
     #         curr_identifier = self.identifiers_map[f]
