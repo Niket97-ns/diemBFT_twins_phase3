@@ -7,18 +7,11 @@ test_case_config is now of the form:
 }
 '''
 class NetworkPlayground(process):
-    def setup(self, node_id_to_node, account_addr_to_node_ids, x, test_case_config):
+    def setup(self, test_case_config, node_to_twin, twin_to_node):
         self.test_case_config = test_case_config
-
-    # def advance_round_if_needed(self):
-    #     self.msgs_rcvd_in_current_round = self.msgs_rcvd_in_current_round + 1
-    #     if self.num_msgs_per_round >= self.max_msgs_per_round:
-    #         self.current_round = self.current_round + 1
-    #         self.num_msgs_per_round = 0
-
-    # def get_node_process_id(self, node_id):
-    #     process_id = self.node_credentials[node_id][0]
-    #     return process_id
+        self.max_rounds = len(test_case_config["partitions"])
+        self.node_to_twin = node_to_twin
+        self.twin_to_node = twin_to_node
 
     def is_twin(self, process_id):
         return (process_id in self.twin_to_node)
@@ -55,6 +48,16 @@ class NetworkPlayground(process):
         # advance_round_if_needed()
 
         msg_round = self.infer_round_from_msg(msg)
+
+        if msg_round >= self.max_rounds + 3:
+            # stop
+            return
+
+        if msg_round > self.max_rounds:
+            # no partitions for this
+            # send all messages to everyone
+            pass
+
         partitions_in_round = self.test_case_config["partitions"][msg_round]
 
         if msg is of type 'proposal|timeout':

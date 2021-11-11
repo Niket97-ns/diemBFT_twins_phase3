@@ -104,28 +104,58 @@ class TwinHandler:
             num_of_nodes: 4,
             num_of_faulty: 1,
             nodes: [1,2,3,4,5],
+            
             test_case_config: {
                 ...
             }
         }
+
+
+        Intra partition msg drop config
+        [
+            {
+                type_of_msg_to_drop: "proposal",
+                node_number: 3,
+                round_from: 1,
+                round_to: 5,
+            },
+            {
+                type_of_msg_to_drop: "vote",
+                node_number: 4,
+                round_from: 1,
+                round_to: 5,
+            },
+            ...
+        ]
+        
+
+        Config for scenarios
+        [
+            {
+                proposal_partitions = [ [[1,2,3], [4,5]], [[1,3], [2], [4,5]] ],
+                vote_partitions = [ [[1,2,3], [4,5]], [[1,3], [2], [4,5]] ],
+                timeout_partitions = [ [[1,2,3], [4,5]], [[1,3], [2], [4,5]] ],
+                leader = [ [2], [1,5] ],
+            },
+            ...
+        ]
+        
     }
 
-    test_case_config is no longer of the form:
+    test_case_config:
     {
-        1: {
-            partitions = [[1,2,3], [4,5]],
-            leader = [2]
-        },
-        2: {
-            partitions = [[1,3], [2], [4,5]],
-            leader = [1,5]
-        }
+        partitions = [ [[1,2,3], [4,5]], [[1,3], [2], [4,5]] ],
+        leader = [ [2], [1,5] ]
     }
+
+    proposal_partitions
+    vote_partitions
+    timeout_partitions
     '''
     def intrapartition_msg_drops(test_case_config, node_id, round_from, round_to):
         for i in range(round_from, round_to + 1):
             new_partitions = []
-            for partition in test_case_config[i]["partitions"]:
+            for partition in test_case_config["partitions"][i]:
                 if node_id in partition:
                     # create separate partition for node_id
                     # create copy of partition
@@ -140,7 +170,7 @@ class TwinHandler:
                 else:
                     new_partitions.append(partition)
 
-            test_case_config[i]["partitions"] = new_partitions
+            test_case_config["partitions"][i] = new_partitions
         return test_case_config
 
 
