@@ -1,22 +1,34 @@
 
 '''
-test_case_config is now of the form:
+scenario is now of the form:
 {
     partitions = [ [[1,2,3], [4,5]], [[1,3], [2], [4,5]] ],
     leader = [ [2], [1,5] ]
 }
 '''
 class NetworkPlayground(process):
-    def setup(self, test_case_config, node_to_twin, twin_to_node):
-        self.test_case_config = test_case_config
-        self.max_rounds = len(test_case_config["partitions"])
+
+    '''
+    number_of_nodes ,
+    number_of_twins, 
+    scenario, 
+    scenario_number_mapping,
+	node_to_twin, 
+    twin_to_node
+    '''
+    def setup(self, number_of_nodes, number_of_twins, scenario, scenario_number_mapping, node_to_twin, twin_to_node):
+        self.scenario = scenario
+        self.rounds = len(scenario["partitions"])
         self.node_to_twin = node_to_twin
         self.twin_to_node = twin_to_node
+        self.scenario_number_mapping = scenario_number_mapping
+        self.number_of_nodes = number_of_nodes
+        self.number_of_twins = number_of_twins
 
     def is_twin(self, process_id):
         return (process_id in self.twin_to_node)
 
-    def infer_round_from_msg(self, msg, msg_type="proposal|vote|timeout"):
+    def infer_round_from_msg(self, msg, msg_type):
         if msg_type == "proposal":
             return msg.block.round
         elif msg_type == "vote":
@@ -25,9 +37,11 @@ class NetworkPlayground(process):
             return msg.tmo_info.round
 
     def send_to_nodes(node_nums_to_send, msg, sender):
+        node_pids = []
         for node_num in node_nums_to_send:
-            node_pid = self.node_num_to_pid[node_num]
-            send(msg, to=node_nums_to_send, from_=sender)
+            # node_pid = self.node_num_to_pid[node_num]
+            node_pids.append(self.scenario_number_mapping[node_num])
+        send(msg, to=node_pids, from_=sender)
 
     def get_partition(partitions_in_round, p):
         for partition in partitions_in_round:
@@ -54,22 +68,22 @@ class NetworkPlayground(process):
 
     def get_partitions_for_type(type_of_msg):
         if type_of_msg == "proposal":
-            return self.test_case_config["proposal_partitions"]
+            return self.scenario["proposal_partitions"]
         elif type_of_msg == "vote":
-            return self.test_case_config["vote_partitions"]
+            return self.scenario["vote_partitions"]
         elif type_of_msg == "timeout":
-            return self.test_case_config["timeout_partitions"]
+            return self.scenario["timeout_partitions"]
 
     def receive(msg, from_=p):
 
-        msg_round = self.infer_round_from_msg(msg)
         msg_type = self.get_msg_type(msg)
+        msg_round = self.infer_round_from_msg(msg, msg_type)
 
-        if msg_round >= self.max_rounds + 3:
+        if msg_round >= self.rounds + 3:
             # stop
             return
 
-        if msg_round > self.max_rounds:
+        if msg_round > self.rounds:
             # no partitions for this
             # no dropping messages based on partitions
             # still handle broadcast
