@@ -55,7 +55,7 @@ class NetworkPlayground(process):
         # advance_round_if_needed()
 
         msg_round = self.infer_round_from_msg(msg)
-        partitions_in_round = self.test_case_config[msg_round]["partitions"]
+        partitions_in_round = self.test_case_config["partitions"][msg_round]
 
         if msg is of type 'proposal|timeout':
             # broadcast
