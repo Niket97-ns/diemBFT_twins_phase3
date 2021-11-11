@@ -36,7 +36,7 @@ class NetworkPlayground(process):
         return []
 
     def get_destination_from_msg(msg):
-        return None
+        return msg.destination_node
 
     def has_twin(node):
         return node in self.node_to_twin
@@ -44,10 +44,26 @@ class NetworkPlayground(process):
     def get_twin(destination_node_num):
         return self.node_to_twin[destination_node_num]
 
+    def get_msg_type(msg):
+        if msg is of type 'proposal':
+            return "proposal"
+        elif msg is of type 'timeout':
+            return "timeout"
+        elif msg is of type 'vote':
+            return "vote"
+
+    def get_partitions_for_type(type_of_msg):
+        if type_of_msg == "proposal":
+            return self.test_case_config["proposal_partitions"]
+        elif type_of_msg == "vote":
+            return self.test_case_config["vote_partitions"]
+        elif type_of_msg == "timeout":
+            return self.test_case_config["timeout_partitions"]
+
     def receive(msg, from_=p):
-        # advance_round_if_needed()
 
         msg_round = self.infer_round_from_msg(msg)
+        msg_type = self.get_msg_type(msg)
 
         if msg_round >= self.max_rounds + 3:
             # stop
@@ -55,15 +71,20 @@ class NetworkPlayground(process):
 
         if msg_round > self.max_rounds:
             # no partitions for this
-            # send all messages to everyone
+            # no dropping messages based on partitions
+            # still handle broadcast
             pass
 
-        partitions_in_round = self.test_case_config["partitions"][msg_round]
 
-        if msg is of type 'proposal|timeout':
+        all_partitions = self.get_partitions_for_type(msg_type)[msg_round]
+
+
+
+        if msg_type == 'proposal' or msg_type == 'timeout':
+
             # broadcast
-            list_of_validators_to_send_to = self.get_partition(
-                partitions_in_round, p)
+            list_of_validators_to_send_to = self.get_partition(all_partitions, p)
+
 
             # Replace twin if needed
             actual_sender_node = p
@@ -72,16 +93,20 @@ class NetworkPlayground(process):
                 # replace sender with actual node
                 actual_sender_node = self.twin_to_node[p]
 
+
             self.send_to_nodes(list_of_validators_to_send_to,
                                msg, actual_sender_node)
 
-        elif msg is of type 'vote':
+
+
+        elif msg_type == 'vote':
+
             # unicast
-            node_nums_in_partition = self.get_partition(partitions_in_round, p)
+            node_nums_in_partition = self.get_partition(all_partitions, p)
             destination_node_num = self.get_destination_from_msg(msg)
 
-            destination_nodes = []
 
+            destination_nodes = []
             if destination_node_num in node_nums_in_partition:
                 # only then send msg to destination
                 destination_nodes.append(destination_node_num)
@@ -90,11 +115,13 @@ class NetworkPlayground(process):
                 # Replace twin if needed
                 destination_nodes.append(self.get_twin(destination_node_num))
 
+
             actual_sender_node = p
             if is_twin(p):
                 # means it is a twin
                 # replace sender with actual node
                 actual_sender_node = self.twin_to_node[p]
+
 
             self.send_to_nodes(destination_nodes, msg, actual_sender_node)
 
