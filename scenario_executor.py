@@ -1,43 +1,24 @@
 
+'''
+test_case_config is now of the form:
+{
+    partitions = [ [[1,2,3], [4,5]], [[1,3], [2], [4,5]] ],
+    leader = [ [2], [1,5] ]
+}
+'''
 class NetworkPlayground(process):
     def setup(self, node_id_to_node, account_addr_to_node_ids, x, test_case_config):
-        # self.current_round = 0
-        # self.msgs_rcvd_in_current_round = 0
-        # self.max_msgs_per_round = x  # some x for now
-        # self.node_id_to_node = node_id_to_node
-        # self.account_addr_to_node_ids = account_addr_to_node_ids
-
         self.test_case_config = test_case_config
 
-    # def is_message_dropped(self, curr_round, src, dest):
-    #     for partition in self.test_case_config[round]["partitions"]:
+    # def advance_round_if_needed(self):
+    #     self.msgs_rcvd_in_current_round = self.msgs_rcvd_in_current_round + 1
+    #     if self.num_msgs_per_round >= self.max_msgs_per_round:
+    #         self.current_round = self.current_round + 1
+    #         self.num_msgs_per_round = 0
 
-    # def find_possible_destination_process_ids(self, round, sender_process_id):
-    #     possible_destination_process_ids = []
-    #     for partition in self.test_case_config[round]["partitions"]:
-    #         if sender_process_id in partition:
-    #             possible_destination_process_ids = partition.copy()
-    #     return possible_destination_process_ids
-
-    # def forward_message(self, round, sender_process_id, msg_type="proposal|vote|timeout"):
-    #     possible_destination_process_ids = self.find_possible_destination_process_ids(
-    #         round, sender_process_id)
-    #     # for j in possible_destination_process_ids:
-    #     if msg_type == "vote":
-    #         # TODO: get leader of next round
-    #         # send to leader of next round if leader is in same partition as sender in this round
-
-    #     else:
-
-    def advance_round_if_needed(self):
-        self.msgs_rcvd_in_current_round = self.msgs_rcvd_in_current_round + 1
-        if self.num_msgs_per_round >= self.max_msgs_per_round:
-            self.current_round = self.current_round + 1
-            self.num_msgs_per_round = 0
-
-    def get_node_process_id(self, node_id):
-        process_id = self.node_credentials[node_id][0]
-        return process_id
+    # def get_node_process_id(self, node_id):
+    #     process_id = self.node_credentials[node_id][0]
+    #     return process_id
 
     def is_twin(self, process_id):
         return (process_id in self.twin_to_node)
@@ -114,34 +95,6 @@ class NetworkPlayground(process):
 
             self.send_to_nodes(destination_nodes, msg, actual_sender_node)
 
-    # def receive(msg, from_=p):
-    #     # advance_round_if_needed()
-    #     msg_round = self.infer_round_from_msg(msg)
-
-    #     # not sure if we should use self.current_round or msg_round for filtering criteria on msgs
-    #     # according to Inferring rounds in paper, we should use msg_round
-
-    #     if msg_round in self.test_case_config:
-    #         # right now only checking if from and to belong in the same partition
-
-    #         partitions_in_round = self.test_case_config[msg_round]
-
-    #         # get node_id's of from and to nodes using self.account_addr_to_node_id's
-    #         # or node_id's will be present in message?
-    #         from_node_id = 1  # some value
-    #         to_node_id = 3  # some value
-
-    #         bool is_msg_tobe_dropped = False
-    #         # check if these node_id's are in the same partition in that round
-    #         for partition in partitions_in_round:
-    #             if from_node_id in partition:
-    #                 if to_node_id not in partition:
-    #                     is_msg_tobe_dropped = True
-
-    #         if not is_msg_tobe_dropped:
-    #             to_node = self.node_id_to_node[to_node_id]
-    #             send(msg, to=to_node)
-
 
 class ScenarioExecutor(process):
     def __init__(self, number_of_nodes, number_of_twins):
@@ -196,3 +149,4 @@ class ScenarioExecutor(process):
             self.twin_to_node[twin_process_id] = node_process_id
 
     def execute_scenario(number_of_nodes, number_of_twins, scenario):
+        pass

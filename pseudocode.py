@@ -110,7 +110,7 @@ class TwinHandler:
         }
     }
 
-    test_case_config is of the form:
+    test_case_config is no longer of the form:
     {
         1: {
             partitions = [[1,2,3], [4,5]],
