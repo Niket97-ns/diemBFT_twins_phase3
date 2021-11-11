@@ -8,6 +8,7 @@ class NetworkPlayground(process):
         # self.account_addr_to_node_ids = account_addr_to_node_ids
 
         self.test_case_config = test_case_config
+        
 
     # def is_message_dropped(self, curr_round, src, dest):
     #     for partition in self.test_case_config[round]["partitions"]:
@@ -50,33 +51,96 @@ class NetworkPlayground(process):
         elif msg_type == "timeout":
             return msg.tmo_info.round
 
+    def send_to_nodes(node_nums_to_send, msg, sender):
+        for node_num in node_nums_to_send:
+            node_pid = self.node_num_to_pid[node_num]
+            send(msg, to=node_nums_to_send, from_=sender)
+
+    def get_partition(partitions_in_round, p):
+        for partition in partitions_in_round:
+            if p in partition:
+                return partition.copy()
+        return []
+
+    def get_destination_from_msg(msg):
+        return None
+
+    def has_twin(node):
+        return node in self.node_to_twin
+
+    def get_twin(destination_node_num):
+        return self.node_to_twin[destination_node_num]
+
     def receive(msg, from_=p):
-        advance_round_if_needed()
-        msg_round = infer_round_from_msg(msg)
+        # advance_round_if_needed()
 
-        # not sure if we should use self.current_round or msg_round for filtering criteria on msgs
-        # according to Inferring rounds in paper, we should use msg_round
+        msg_round = self.infer_round_from_msg(msg)
+        partitions_in_round = self.test_case_config[msg_round]["partitions"]
 
-        if msg_round in self.test_case_config:
-            # right now only checking if from and to belong in the same partition
+        if msg is of type 'proposal|timeout':
+            # broadcast
+            list_of_validators_to_send_to = self.get_partition(partitions_in_round, p)
 
-            partitions_in_round = self.test_case_config[msg_round]
+            # Replace twin if needed
+            actual_sender_node = p
+            if is_twin(p):
+                # means it is a twin
+                # replace sender with actual node
+                actual_sender_node = self.twin_to_node[p]
 
-            # get node_id's of from and to nodes using self.account_addr_to_node_id's
-            # or node_id's will be present in message?
-            from_node_id = 1  # some value
-            to_node_id = 3  # some value
+            self.send_to_nodes(list_of_validators_to_send_to, msg, actual_sender_node)
 
-            bool is_msg_tobe_dropped = False
-            # check if these node_id's are in the same partition in that round
-            for partition in partitions_in_round:
-                if from_node_id in partition:
-                    if to_node_id not in partition:
-                        is_msg_tobe_dropped = True
+        elif msg is of type 'vote':
+            # unicast
+            node_nums_in_partition = self.get_partition(partitions_in_round, p)
+            destination_node_num = self.get_destination_from_msg(msg)
+            
+            destination_nodes = []
 
-            if not is_msg_tobe_dropped:
-                to_node = self.node_id_to_node[to_node_id]
-                send(msg, to=to_node)
+            if destination_node_num in node_nums_in_partition:
+                # only then send msg to destination
+                destination_nodes.append(destination_node_num)
+
+            if self.has_twin(destination_node_num) and self.get_twin(destination_node_num) in node_nums_in_partition:
+                # Replace twin if needed
+                destination_nodes.append(self.get_twin(destination_node_num))
+
+            actual_sender_node = p
+            if is_twin(p):
+                # means it is a twin
+                # replace sender with actual node
+                actual_sender_node = self.twin_to_node[p]
+
+            self.send_to_nodes(destination_nodes, msg, actual_sender_node)
+
+
+    # def receive(msg, from_=p):
+    #     # advance_round_if_needed()
+    #     msg_round = self.infer_round_from_msg(msg)
+
+    #     # not sure if we should use self.current_round or msg_round for filtering criteria on msgs
+    #     # according to Inferring rounds in paper, we should use msg_round
+
+    #     if msg_round in self.test_case_config:
+    #         # right now only checking if from and to belong in the same partition
+
+    #         partitions_in_round = self.test_case_config[msg_round]
+
+    #         # get node_id's of from and to nodes using self.account_addr_to_node_id's
+    #         # or node_id's will be present in message?
+    #         from_node_id = 1  # some value
+    #         to_node_id = 3  # some value
+
+    #         bool is_msg_tobe_dropped = False
+    #         # check if these node_id's are in the same partition in that round
+    #         for partition in partitions_in_round:
+    #             if from_node_id in partition:
+    #                 if to_node_id not in partition:
+    #                     is_msg_tobe_dropped = True
+
+    #         if not is_msg_tobe_dropped:
+    #             to_node = self.node_id_to_node[to_node_id]
+    #             send(msg, to=to_node)
 
 
 class ScenarioExecutor:
