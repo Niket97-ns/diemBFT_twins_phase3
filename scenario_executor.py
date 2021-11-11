@@ -74,6 +74,17 @@ class NetworkPlayground(process):
         elif type_of_msg == "timeout":
             return self.scenario["timeout_partitions"]
 
+
+
+    def replace_with_twin_if_needed(p):
+        # Replace twin if needed
+        actual_sender_node = p
+        if is_twin(p):
+            # means it is a twin
+            # replace sender with actual node
+            actual_sender_node = self.twin_to_node[p]
+        return actual_sender_node
+
     def receive(msg, from_=p):
 
         msg_type = self.get_msg_type(msg)
@@ -99,14 +110,7 @@ class NetworkPlayground(process):
             # broadcast
             list_of_validators_to_send_to = self.get_partition(all_partitions, p)
 
-
-            # Replace twin if needed
-            actual_sender_node = p
-            if is_twin(p):
-                # means it is a twin
-                # replace sender with actual node
-                actual_sender_node = self.twin_to_node[p]
-
+            actual_sender_node = self.replace_with_twin_if_needed(p)
 
             self.send_to_nodes(list_of_validators_to_send_to,
                                msg, actual_sender_node)
@@ -129,13 +133,7 @@ class NetworkPlayground(process):
                 # Replace twin if needed
                 destination_nodes.append(self.get_twin(destination_node_num))
 
-
-            actual_sender_node = p
-            if is_twin(p):
-                # means it is a twin
-                # replace sender with actual node
-                actual_sender_node = self.twin_to_node[p]
-
+            actual_sender_node = self.replace_with_twin_if_needed(p)
 
             self.send_to_nodes(destination_nodes, msg, actual_sender_node)
 
