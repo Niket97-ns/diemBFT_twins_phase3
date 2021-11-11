@@ -142,36 +142,51 @@ class TwinHandler:
         
     }
 
-    test_case_config:
-    {
-        partitions = [ [[1,2,3], [4,5]], [[1,3], [2], [4,5]] ],
-        leader = [ [2], [1,5] ]
-    }
-
     proposal_partitions
     vote_partitions
     timeout_partitions
+
+
+    test_case_config:
+    {
+        proposal_partitions = [ [[1,2,3], [4,5]], [[1,3], [2], [4,5]] ],
+        vote_partitions = [ [[1,2,3], [4,5]], [[1,3], [2], [4,5]] ],
+        timeout_partitions = [ [[1,2,3], [4,5]], [[1,3], [2], [4,5]] ],
+        leader = [ [2], [1,5] ],
+    }
     '''
-    def intrapartition_msg_drops(test_case_config, node_id, round_from, round_to):
-        for i in range(round_from, round_to + 1):
-            new_partitions = []
-            for partition in test_case_config["partitions"][i]:
-                if node_id in partition:
-                    # create separate partition for node_id
+
+    def get_partitions_for_type(test_case_config, type_of_msg):
+        if type_of_msg == "proposal":
+            return test_case_config["proposal_partitions"]
+        elif type_of_msg == "vote":
+            return test_case_config["vote_partitions"]
+        elif type_of_msg == "timeout":
+            return test_case_config["timeout_partitions"]
+
+    def intrapartition_msg_drops(self, test_case_config, type_of_msg_to_drop, node_number, round_from, round_to):
+        partitions_for_type_in_scenario = self.get_partitions_for_type(test_case_config, type_of_msg_to_drop)
+
+        for current_round in range(round_from, round_to + 1):
+            new_partitions_for_scenario = []
+            for partition in partitions_for_type_in_scenario[current_round]:
+                if node_number in partition:
+                    # create separate partition for node_number
                     # create copy of partition
                     new_partition = partition.copy()
                     # remove node_id from partition
-                    new_partition.remove(node_id)
-                    new_partitions.append(new_partition)
-                    # create separate list for node_id
-                    node_id_partition = []
-                    node_id_partition.append(node_id)
-                    new_partitions.append(node_id_partition)
+                    new_partition.remove(node_number)
+                    new_partitions_for_scenario.append(new_partition)
+                    # create separate list for node_number
+                    new_partitions_for_scenario.append([node_number])
                 else:
-                    new_partitions.append(partition)
+                    new_partitions_for_scenario.append(partition)
 
-            test_case_config["partitions"][i] = new_partitions
-        return test_case_config
+            # this will update the partitions for the current round in the partitions array for the corresponding type in the config
+            partitions_for_type_in_scenario[current_round] = new_partitions_for_scenario
+
+        # return is not needed as we are changing the config in place
+        # return test_case_config
 
 
 #######################################
