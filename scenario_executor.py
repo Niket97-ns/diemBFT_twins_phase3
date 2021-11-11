@@ -6,6 +6,8 @@ test_case_config is now of the form:
     leader = [ [2], [1,5] ]
 }
 '''
+
+
 class NetworkPlayground(process):
     def setup(self, test_case_config, node_to_twin, twin_to_node):
         self.test_case_config = test_case_config
@@ -38,10 +40,9 @@ class NetworkPlayground(process):
     def get_destination_from_msg(msg):
         return msg.destination_node
 
-    def has_twin(node):
-        return node in self.node_to_twin
-
     def get_twin(destination_node_num):
+        if destination_node_num not in self.node_to_twin:
+            return None
         return self.node_to_twin[destination_node_num]
 
     def get_msg_type(msg):
@@ -75,16 +76,13 @@ class NetworkPlayground(process):
             # still handle broadcast
             pass
 
-
         all_partitions = self.get_partitions_for_type(msg_type)[msg_round]
-
-
 
         if msg_type == 'proposal' or msg_type == 'timeout':
 
             # broadcast
-            list_of_validators_to_send_to = self.get_partition(all_partitions, p)
-
+            list_of_validators_to_send_to = self.get_partition(
+                all_partitions, p)
 
             # Replace twin if needed
             actual_sender_node = p
@@ -93,11 +91,8 @@ class NetworkPlayground(process):
                 # replace sender with actual node
                 actual_sender_node = self.twin_to_node[p]
 
-
             self.send_to_nodes(list_of_validators_to_send_to,
                                msg, actual_sender_node)
-
-
 
         elif msg_type == 'vote':
 
@@ -105,23 +100,20 @@ class NetworkPlayground(process):
             node_nums_in_partition = self.get_partition(all_partitions, p)
             destination_node_num = self.get_destination_from_msg(msg)
 
-
             destination_nodes = []
             if destination_node_num in node_nums_in_partition:
                 # only then send msg to destination
                 destination_nodes.append(destination_node_num)
 
-            if self.has_twin(destination_node_num) and self.get_twin(destination_node_num) in node_nums_in_partition:
+            if self.get_twin(destination_node_num) and self.get_twin(destination_node_num) in node_nums_in_partition:
                 # Replace twin if needed
                 destination_nodes.append(self.get_twin(destination_node_num))
-
 
             actual_sender_node = p
             if is_twin(p):
                 # means it is a twin
                 # replace sender with actual node
                 actual_sender_node = self.twin_to_node[p]
-
 
             self.send_to_nodes(destination_nodes, msg, actual_sender_node)
 
