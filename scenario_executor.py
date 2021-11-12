@@ -27,8 +27,8 @@ class NetworkPlayground(process):
         self.number_of_nodes = number_of_nodes
         self.number_of_twins = number_of_twins
 
-    def is_twin(self, process_id):
-        return (process_id in self.twin_to_node)
+    def is_twin(self, node_number):
+        return node_number in self.twin_to_node
 
     def infer_round_from_msg(self, msg, msg_type):
         if msg_type == "proposal":
@@ -95,13 +95,37 @@ class NetworkPlayground(process):
             # stop
             return
 
+        all_partitions = self.get_partitions_for_type(msg_type)[msg_round]
+
         if msg_round > self.rounds:
             # no partitions for this
             # no dropping messages based on partitions
             # still handle broadcast
-            pass
+            
+            actual_sender_node = self.replace_with_twin_if_needed(p)
+            destination_nodes = []
+                        
+            if msg_type == 'proposal' or msg_type == 'timeout':
+                # broadcast
+                set_of_all_nodes = set()
+                for partition in all_partitions:
+                    set_of_all_nodes.update(partition)
 
-        all_partitions = self.get_partitions_for_type(msg_type)[msg_round]
+                for node_num in set_of_all_nodes:
+                    destination_nodes.append(node_num)
+
+            elif msg_type == 'vote':
+                # unicast
+                destination_node_num = self.get_destination_from_msg(msg)
+                destination_nodes.append(destination_node_num)
+                if self.get_twin(destination_node_num):
+                    # Replace twin if needed
+                    destination_nodes.append(self.get_twin(destination_node_num))
+
+            self.send_to_nodes(destination_nodes, msg, actual_sender_node)
+            return
+
+
 
         if msg_type == 'proposal' or msg_type == 'timeout':
 
