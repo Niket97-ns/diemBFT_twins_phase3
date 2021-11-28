@@ -1,0 +1,14 @@
+[
+    {
+        "type_of_msg_to_drop": "proposal",
+        "node_number": 3,
+        "round_from": 1,
+        "round_to": 5
+    },
+    {
+        "type_of_msg_to_drop": "vote",
+        "node_number": 4,
+        "round_from": 1,
+        "round_to": 5
+    }
+]
